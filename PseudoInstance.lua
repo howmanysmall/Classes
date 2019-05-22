@@ -508,12 +508,24 @@ PseudoInstance:Register("PseudoInstance", { -- Generates a rigidly defined userd
 	end;
 }, false)
 
+local Instance_new = Instance.new
+local pcall = pcall
+
 function PseudoInstance.new(ClassName, ...)
 	local Class = Templates[ClassName]
 
 	if not Class then
-		Resources:LoadLibrary(ClassName)
-		Class = Templates[ClassName] or Debug.Error("Invalid ClassName: " .. ClassName)
+		local Success = pcall(Resources.LoadLibrary, Resources, ClassName)
+		if not Success then
+			local CreateSuccess, Object = pcall(Instance_new, ClassName, ...)
+			if CreateSuccess and Object then
+				return Object
+			else
+				Debug.Error("Invalid ClassName: " .. ClassName)
+			end
+		else
+			Class = Templates[ClassName] or Debug.Error("Invalid ClassName: " .. ClassName)
+		end
 	end
 
 	if Class.Abstract then
